@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String          @id @default(cuid())
+  email     String          @unique
+  password  String
+  name      String?
+  createdAt DateTime        @default(now())
+  accounts  TikTokAccount[]
+  themes    Theme[]
+}
+
+model TikTokAccount {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  openId       String      @unique
+  username     String
+  displayName  String?
+  avatarUrl    String?
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  posts        VideoPost[]
+}
+
+model Theme {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  style        String        @default("educational")
+  language     String        @default("ja")
+  createdAt    DateTime      @default(now())
+  sourceVideos SourceVideo[]
+  posts        VideoPost[]
+}
+
+model SourceVideo {
+  id           String      @id @default(cuid())
+  themeId      String
+  theme        Theme       @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  filename     String
+  originalName String
+  path         String
+  duration     Float       @default(0)
+  size         Int         @default(0)
+  status       String      @default("PENDING")
+  aiStrategy   String?
+  createdAt    DateTime    @default(now())
+  clips        VideoClip[]
+}
+
+model VideoClip {
+  id            String      @id @default(cuid())
+  sourceVideoId String
+  sourceVideo   SourceVideo @relation(fields: [sourceVideoId], references: [id], onDelete: Cascade)
+  filename      String
+  path          String
+  startTime     Float
+  endTime       Float
+  duration      Float
+  caption       String?
+  hashtags      String?
+  clipOrder     Int
+  status        String      @default("PENDING")
+  createdAt     DateTime    @default(now())
+  posts         VideoPost[]
+}
+
+model VideoPost {
+  id           String         @id @default(cuid())
+  themeId      String
+  theme        Theme          @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  accountId    String
+  account      TikTokAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  clipId       String?
+  clip         VideoClip?     @relation(fields: [clipId], references: [id])
+  title        String?
+  caption      String?
+  hashtags     String?
+  status       String         @default("PENDING")
+  scheduledAt  DateTime?
+  postedAt     DateTime?
+  tiktokPostId String?
+  views        Int            @default(0)
+  likes        Int            @default(0)
+  comments     Int            @default(0)
+  shares       Int            @default(0)
+  createdAt    DateTime       @default(now())
+}
